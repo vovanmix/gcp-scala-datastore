@@ -4,9 +4,7 @@ import com.google.cloud.datastore.{Key => CloudKey}
 import io.applicative.datastore.{BaseEntity, Key}
 import org.specs2.mutable.Specification
 import org.specs2.mock.Mockito
-
 import scala.collection.immutable.Seq
-
 
 
 class ReflectionHelperSpec extends Specification with Mockito {
@@ -99,6 +97,15 @@ class ReflectionHelperSpec extends Specification with Mockito {
       val res = helper.datastoreEntityToInstance[TestClass4](entity, clazz)
       res shouldEqual instance
     }
+
+    "convert datastore instance to class with optional ID" in {
+      val instance = TestClass5(Some(11), "test", Some(true))
+      val key = Key(CloudKey.newBuilder("test", "TestClass5", "test").setId(instance.id.getOrElse(0)).build())
+      val clazz = classOf[TestClass5]
+      val entity = helper.instanceToDatastoreEntity(key, instance, clazz)
+      val res = helper.datastoreEntityToInstance[TestClass5](entity, clazz)
+      res shouldEqual instance
+    }
   }
 }
 
@@ -113,3 +120,8 @@ case class TestClass3(
                        tests: Seq[TestClass1]
                      ) extends BaseEntity
 case class TestClass4(id: Long, price: Option[Double], discount: Option[Float], onSale: Boolean) extends BaseEntity
+case class TestClass5(
+                       id: Option[Long],
+                       name: String,
+                       status: Option[Boolean]
+                     ) extends BaseEntity

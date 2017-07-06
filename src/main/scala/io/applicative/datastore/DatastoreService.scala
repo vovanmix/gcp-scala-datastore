@@ -7,7 +7,8 @@ import io.applicative.datastore.util.reflection.ReflectionHelper
 import scala.annotation.tailrec
 import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.concurrent.duration.DurationInt
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
 
@@ -47,7 +48,23 @@ object DatastoreService extends Datastore with ReflectionHelper {
     val key = createKey(entity.id, kind)
     val dataStoreEntity = instanceToDatastoreEntity(key, entity, clazz)
     cloudDataStore.add(dataStoreEntity)
-    entity
+
+    val constructor = clazz.getConstructors.head
+
+    val params = entity.getClass.getDeclaredFields.map {
+      f =>
+        f.setAccessible(true)
+        val name = f.getName
+        if (name == "id") {
+          f.get(entity) match {
+            case None => Some(key.key.getId)
+            case _ => key.key.getId
+          }
+        } else {
+          f.get(entity)
+        }
+    }
+    constructor.newInstance(params: _*).asInstanceOf[E]
   }
 
   override def add[E <: BaseEntity : TypeTag : ClassTag](key: Key, entity: E)(implicit ec: ExecutionContext): Future[E] = Future {
@@ -203,6 +220,7 @@ object DatastoreService extends Datastore with ReflectionHelper {
       case id: String => getKeyFactory(kind).newKey(id)
       case id: Long => getKeyFactory(kind).newKey(id)
       case id: Int => getKeyFactory(kind).newKey(id)
+      case _: Option[_] => cloudDataStore.allocateId(getKeyFactory(kind).newKey())
       case otherId => throw UnsupportedIdTypeException(otherId.getClass.getCanonicalName)
     }
     Key(cloudKey)

@@ -156,8 +156,7 @@ private[datastore] trait ReflectionHelper extends DateTimeHelper {
   private[datastore] def datastoreEntityToInstance[E: TypeTag : ClassTag](entity: FullEntity[GCKey], clazz: Class[_]): E = {
     val defaultInstance = createDefaultInstance[E](clazz)
     setActualFieldValues(defaultInstance, entity)
-    val a = defaultInstance.asInstanceOf[E]
-    a
+    defaultInstance.asInstanceOf[E]
   }
 
   private def typeToClassTag[T: TypeTag]: ClassTag[T] = {
@@ -221,7 +220,11 @@ private[datastore] trait ReflectionHelper extends DateTimeHelper {
       val fieldClassName = member.returnType.typeSymbol.fullName
       val fieldName = member.name.toString
       if (fieldName == "id" && entity.getKey != null) {
-        field.set(entity.getKey.getNameOrId)
+        if (fieldClassName == OptionClassName) {
+          field.set(Some(entity.getKey.getNameOrId))
+        } else {
+          field.set(entity.getKey.getNameOrId)
+        }
       } else {
         val value = fieldClassName match {
           case OptionClassName =>
