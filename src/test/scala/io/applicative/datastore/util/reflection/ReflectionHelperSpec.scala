@@ -5,6 +5,8 @@ import io.applicative.datastore.{BaseEntity, Key}
 import org.specs2.mutable.Specification
 import org.specs2.mock.Mockito
 
+import scala.collection.immutable.Seq
+
 
 
 class ReflectionHelperSpec extends Specification with Mockito {
@@ -74,10 +76,40 @@ class ReflectionHelperSpec extends Specification with Mockito {
       val res = helper.datastoreEntityToInstance[TestClass2](entity, clazz)
       res shouldEqual instance
     }
-  }
 
+    "convert datastore instance to class with a sequence of objects" in {
+      val instance = TestClass3(
+        1,
+        "test",
+        Seq(NestedClass(2, "test2"), NestedClass(3, "test3")),
+        Seq(TestClass1(3, "test4"), TestClass1(4, "test5"))
+      )
+      val key = Key(CloudKey.newBuilder("test", "TestClass", "test").setId(instance.id).build())
+      val clazz = classOf[TestClass3]
+      val entity = helper.instanceToDatastoreEntity(key, instance, clazz)
+      val res = helper.datastoreEntityToInstance[TestClass3](entity, clazz)
+      res shouldEqual instance
+    }
+
+    "convert datastore instance to class with different types" in {
+      val instance = TestClass4(1, Some(11.2), Some(12.1F), true)
+      val key = Key(CloudKey.newBuilder("test", "TestClass", "test").setId(instance.id).build())
+      val clazz = classOf[TestClass4]
+      val entity = helper.instanceToDatastoreEntity(key, instance, clazz)
+      val res = helper.datastoreEntityToInstance[TestClass4](entity, clazz)
+      res shouldEqual instance
+    }
+  }
 }
 
 case class TestClassWithStringId(id: String = "testId", size: Int = 1) extends BaseEntity
 case class TestClass1(id: Long, name: String) extends BaseEntity
 case class TestClass2(id: Long, name: Option[String]) extends BaseEntity
+case class NestedClass(idx: Long, name: String)
+case class TestClass3(
+                       id: Long,
+                       name: String,
+                       options: Seq[NestedClass],
+                       tests: Seq[TestClass1]
+                     ) extends BaseEntity
+case class TestClass4(id: Long, price: Option[Double], discount: Option[Float], onSale: Boolean) extends BaseEntity
