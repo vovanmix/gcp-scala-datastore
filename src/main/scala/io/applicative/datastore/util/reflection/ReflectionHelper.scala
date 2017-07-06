@@ -12,7 +12,8 @@ import scala.reflect.{ClassTag, api, classTag}
 import com.google.cloud.datastore.{Key => GCKey}
 
 import scala.reflect.runtime.universe._
-import scala.util.{Try,Success,Failure}
+import scala.util.Try
+import scala.collection.JavaConverters._
 
 private[datastore] trait ReflectionHelper extends DateTimeHelper {
 
@@ -32,7 +33,6 @@ private[datastore] trait ReflectionHelper extends DateTimeHelper {
   private val OffsetDateTimeClassName = getClassName[OffsetDateTime]()
   private val OptionClassName = getClassName[Option[_]]()
   private val SeqClassName = getClassName[scala.collection.immutable.Seq[_]]()
-  import scala.collection.JavaConverters._
 
   private[datastore] def extractRuntimeClass[E: ClassTag](): RuntimeClass = {
     val runtimeClass = classTag[E].runtimeClass
