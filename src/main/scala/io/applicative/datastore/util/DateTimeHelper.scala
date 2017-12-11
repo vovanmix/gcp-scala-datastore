@@ -1,14 +1,14 @@
 package io.applicative.datastore.util
 
 import java.time.format.DateTimeFormatter
-import java.time.{LocalDateTime, OffsetDateTime, ZoneOffset, ZonedDateTime}
+import java.time._
 import java.util.Date
 
 import com.google.cloud.datastore.DateTime
 
 private[datastore] trait DateTimeHelper {
 
-  private val localDateTimeFormatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME
+  private val localDateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
   private val zonedDateTimeFormatter = DateTimeFormatter.ISO_ZONED_DATE_TIME
   private val offsetDateTimeFormatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME
 
@@ -41,7 +41,7 @@ private[datastore] trait DateTimeHelper {
   }
 
   private[datastore] def parseLocalDateTime(timeString: String): LocalDateTime = {
-    LocalDateTime.parse(timeString, localDateTimeFormatter)
+    LocalDateTime.from(LocalDate.parse(timeString, localDateTimeFormatter).atStartOfDay());
   }
 
   private[datastore] def parseZonedDateTime(timeString: String): ZonedDateTime = {
